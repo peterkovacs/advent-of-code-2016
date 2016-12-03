@@ -5,13 +5,7 @@
 
 import Foundation
 import FootlessParser
-
-struct Input: Sequence, IteratorProtocol {
-  typealias Element = String
-  mutating func next() -> String? {
-    return readLine( strippingNewline: true )
-  }
-}
+import Lib
 
 enum Direction: Character {
   case u = "U"
