@@ -12,31 +12,24 @@ struct HashSequence: Sequence, IteratorProtocol {
     return ( number, try! digest.finish() )
   }
 
-  func valid( _ data: (Int,[UInt8]) ) -> Bool {
+  static func valid( _ data: (Int,[UInt8]) ) -> Bool {
     return data.1[0] == 0 && data.1[1] == 0 && data.1[2] < 16
   }
 
-  // I couldn't get an infinite sequence of this hash to work lazily with a
-  // filter. Therefore, I'm doing the filtering directly in this method.
   mutating func next() -> (Int,[UInt8])? {
-    while( true ) {
-      defer { val = val + 1 }
-      let result = hash( number: val )
-      if valid( result ) {
-        return result
-      }
-    }
+    defer { val = val + 1 }
+    return hash( number: val )
   }
 }
 
-let result = Array( HashSequence().prefix( 8 ) )
+let sequence = HashSequence().lazy.filter( HashSequence.valid )
 
 print( "PART 1" )
-print( result.map { String(format: "%x", ($0.1[2] & 0xf)) } .joined() )
+print( sequence.prefix(8).map { String(format: "%x", ($0.1[2] & 0xf)) } .joined() )
 
 print( "PART 2" )
 var part2 = [UInt8?]( repeating: nil, count: 8 )
-for (_,i) in HashSequence() {
+for (_,i) in sequence {
   if Int(i[2] & 0xf) < 8 && part2[ Int(i[2] & 0xf) ] == nil {
     part2[ Int(i[2] & 0xf) ] = (i[3] >> 4) & 0xf
   }
