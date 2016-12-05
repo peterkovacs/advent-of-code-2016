@@ -7,7 +7,8 @@ let package = Package( name: "AdventOfCode2016",
                          Target( name: "Day4", dependencies: [ "Lib" ] )
                        ],
                        dependencies: [
-                         .Package( url: "https://github.com/peterkovacs/FootlessParser.git", majorVersion: 1 )
+                         .Package( url: "https://github.com/peterkovacs/FootlessParser.git", majorVersion: 1 ),
+                         .Package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", majorVersion: 0)
                        ]
                       )
 
