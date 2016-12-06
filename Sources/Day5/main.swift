@@ -1,15 +1,20 @@
 import Foundation
-import CryptoSwift
+import CommonCrypto
 
 struct HashSequence: Sequence, IteratorProtocol {
   var val: Int = 0
+  var bytes: [UInt8] = "abbhdwsy".utf8.map({$0})
+  var digest: [UInt8] = [UInt8]( repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH) )
 
-  func hash( number: Int ) -> ( Int, [UInt8] ) {
-    var digest = MD5()
-    _ = try! digest.update( withBytes: "abbhdwsy".utf8.map({$0}) )
-    _ = try! digest.update( withBytes: String(number).utf8.map({$0}) )
+  mutating func hash( number: Int ) -> ( Int, [UInt8] ) {
+    var bytes = self.bytes
+    bytes.append( contentsOf: String(number).utf8.map({$0}) )
 
-    return ( number, try! digest.finish() )
+    _ = bytes.withUnsafeBufferPointer {
+      CC_MD5( $0.baseAddress, CC_LONG(bytes.count), &digest )
+    }
+
+    return ( number, digest )
   }
 
   static func valid( _ data: (Int,[UInt8]) ) -> Bool {
