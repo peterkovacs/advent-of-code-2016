@@ -25,18 +25,14 @@ extension Data {
     return String(mostCommonLetters(count:5)) == checksum
   }
 
-  func letterCounts() -> [Character:Int] {
-    return words.reduce( [:] ) { (d,word) -> [Character:Int] in
-      return word.characters.reduce( d ) { (dict,letter) -> [Character:Int] in
-        var dict = dict
-        dict[ letter ] = ( dict[ letter ] ?? 0 ) + 1
-        return dict
-      }
-    }
+  func letterCounts() -> Frequency<Character> {
+    var frequency = Frequency<Character>()
+    words.forEach { frequency.add( $0.characters ) }
+    return frequency
   }
 
   func mostCommonLetters( count: Int ) -> [Character] {
-    return letterCounts().sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }.prefix( upTo: count ).map{ $0.key }
+    return letterCounts().sorted { $0.count == $1.count ? $0.key < $1.key : $0.count > $1.count }.prefix( upTo: count ).map{ $0.0 }
   }
 }
 
