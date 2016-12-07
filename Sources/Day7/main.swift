@@ -87,17 +87,15 @@ class IP {
   var hypernet: [String] = []
 
   func parser() -> Parser<Character,IP> {
-    let supernet = { (o: String) -> IP in
+    let supernet = { (o: String) in
       self.supernet.append( o )
-      return self
     } <^> oneOrMore( alphanumeric )
 
-    let hypernet = { (o: String) -> IP in
+    let hypernet = { (o: String) in
       self.hypernet.append( o )
-      return self
     } <^> ( char( "[" ) *> oneOrMore( alphanumeric ) ) <* char( "]" )
 
-    return { _ in self } <^> zeroOrMore(hypernet <|> supernet)
+    return zeroOrMore(hypernet <|> supernet) >>- { _ in pure(self) }
   }
 }
 
@@ -115,12 +113,9 @@ extension IP {
   }
 }
 
-let parsed = Input().map { line -> IP in
-  return try! parse( IP().parser(), line )
-} 
-
-let tls = parsed.filter { $0.isTLS }
-let ssl = parsed.filter { $0.isSSL }
+let parsed = Input().map { try? parse( IP().parser(), $0 ) } 
+let tls = parsed.filter { $0?.isTLS ?? false }
+let ssl = parsed.filter { $0?.isSSL ?? false }
 
 print( tls.count )
 print( ssl.count )
