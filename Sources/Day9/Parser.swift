@@ -1,4 +1,5 @@
 import Foundation
+import FootlessParser
 
 public func adding<T,A: IntegerArithmetic>( _ x: Parser<T,A>, to start: A ) -> Parser<T,A> {
   let p: Parser<T,A> = Parser { input in
