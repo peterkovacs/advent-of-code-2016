@@ -2,18 +2,6 @@ import Foundation
 import FootlessParser
 import Lib
 
-extension Int {
-  var bits: Int {
-    var result = self &- ((self >> 1) & 0x55555555)
-    result = ((result >> 2) & 0x33333333) &+ (result & 0x33333333)
-    result = ((result >> 4) &+ result) & 0x0f0f0f0f
-    result = ((result >> 8) &+ result) & 0x00ff00ff
-    result = ((result >> 16) &+ result) & 0x0000ffff
-    return result
-  }
-}
-
-
 enum Command {
   case rect( Int, Int )
   case rotateRow( Int, Int )
