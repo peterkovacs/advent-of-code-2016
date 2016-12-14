@@ -22,6 +22,8 @@ enum Element: Int {
   case cobalt
   case elerium
   case dilithium
+  case hydrogen
+  case lithium
 }
 
 enum Type: Int {
@@ -178,28 +180,112 @@ struct Building {
   }
 }
 
-func solve( initial: Building ) -> Int {
-  var buildings: [(Int,Building)] = [(0, initial)]
+func solve( initial: Building ) -> (Int,[Building]) {
+  var buildings: [(Int,Building,[Building])] = [(0, initial, [initial])]
   var state = State()
 
   while !buildings.isEmpty {
-    let (num, building) = buildings.removeFirst()
+    let (num, building, moves) = buildings.removeFirst()
     let validMoves = building.moves().filter { $0.isValid }
 
     for move in validMoves {
-      if move.isFinished { return num + 1 }
+      if move.isFinished { 
+        var moves = moves
+        moves.append( move )
+        return (num + 1, moves) 
+      }
 
       // Have we seen this state before?
       let pairs = move.pairs
       guard !state.contains( pairs ) else { continue }
 
+      var moves = moves
+      moves.append( move )
       state.insert( pairs )
-      buildings.append( (num + 1, move ) )
+      buildings.append( (num + 1, move, moves ) )
     }
   }
 
-  return -1
+  return (-1,[])
 }
+
+extension Element: CustomStringConvertible {
+  var description: String {
+    switch self {
+    case .polonium:
+      return "Po"
+    case .thulium:
+      return "Th"
+    case .promethium:
+      return "Pr"
+    case .ruthenium:
+      return "Ru"
+    case .cobalt:
+      return "Co"
+    case .elerium:
+      return "El"
+    case .dilithium:
+      return "Di"
+    case .hydrogen:
+      return " H"
+    case .lithium:
+      return "Li"
+    }
+  }
+}
+
+extension Type: CustomStringConvertible {
+  var description: String {
+    switch self {
+    case .microchip:
+      return "M"
+    case .generator:
+      return "G"
+    }
+  }
+}
+
+extension Item: CustomStringConvertible {
+  var description: String {
+    return "\(element)\(type)"
+  }
+}
+
+extension Building: CustomStringConvertible {
+  var description: String {
+    var result = ""
+      for (i, floor) in floors.enumerated().reversed() {
+        result.append( elevator == i ? "E " : "  " )
+        for element in elements {
+          let microchip = Item( type: .microchip, element: element )
+          let generator = Item( type: .generator, element: element )
+
+          if floor.contains( microchip ) {
+            result.append( "\(microchip) " )
+          } else { 
+            result.append( " .. " )
+          }
+
+          if floor.contains( generator ) {
+            result.append( "\(generator) " )
+          } else { 
+            result.append( " .. " )
+          }
+        }
+
+        result.append( "\n" )
+      }
+      return result
+  }
+}
+
+var sample = Building(elevator: 0,
+                      floors: [ Set( [Item(type: .microchip, element: .hydrogen),
+                                      Item(type: .microchip, element: .lithium)] ),
+                                Set( [Item(type: .generator, element: .hydrogen)] ),
+                                Set( [Item(type: .generator, element: .lithium)] ),
+                                Set() ],
+                      elements: [.hydrogen, .lithium])
 
 var part1 = Building(elevator: 0, 
                      floors: [ Set( [Item(type: .generator, element: .polonium),
@@ -235,5 +321,14 @@ var part2 = Building(elevator: 0,
                                Set() ],
                      elements: [.polonium, .thulium, .promethium, .ruthenium, .cobalt, .elerium, .dilithium])
 
-print( solve(initial: part1 ) )
-print( solve(initial: part2 ) )
+var (num, moves) = solve(initial: sample)
+print( moves.map{ $0.description }.joined( separator: "\n" ) )
+print( num )
+
+(num, moves) = solve( initial: part1 )
+print( moves.map{ $0.description }.joined( separator: "\n" ) )
+print( num )
+
+(num, moves) = solve( initial: part2 )
+print( moves.map{ $0.description }.joined( separator: "\n" ) )
+print( num )
