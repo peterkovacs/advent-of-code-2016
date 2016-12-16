@@ -1,5 +1,6 @@
 import Foundation
 import FootlessParser
+import Dispatch
 
 // 
 // let a = data 
@@ -60,29 +61,28 @@ struct Dragon {
   }
 
   func checksum( size: Int ) -> [UInt8] {
-    var result = [UInt8]()
-
     // Calculate largest power of 2 that divides data.count.
     let chunksize = size & ~(size - 1)
-    result.reserveCapacity( chunksize )
 
-    // OPTIMIZE: we know how many 1s are in data[0]+data[1] (its exactly data.count)
-    // So we could calculate the number of these groups that appear in the
-    // chunk + add in any joiners present.  Then we can increment by at least count + 1 each time.
+    let queue = DispatchQueue( label: "com.kovapps.dragon", attributes: .concurrent )
+    let group = DispatchGroup()
+    var result = [UInt8](repeating: 0, count: size / chunksize)
+
     for i in stride( from: 0, to: size, by: chunksize ) {
-      if (i..<(i+chunksize)).reduce(0, { $0 + (self[$1] == 0 ? 1 : 0) }) & 1 == 0 {
-        result.append( 1 )
-      } else {
-        result.append( 0 )
+      queue.async( group: group ) {
+        result[ i / chunksize ] = (i..<(i+chunksize)).reduce(0, { $0 ^ self[$1] }) ^ 1
       }
     }
+
+    group.wait()
 
     return result
   }
 
   subscript( i: Int ) -> UInt8 {
-    let index = i % ( count+1 )
-    let chunk = ( i / ( count+1 ) )
+    let max = count + 1
+    let index = i % max
+    let chunk = ( i / max )
 
     if index < count {
       let which = chunk & 1
