@@ -98,26 +98,25 @@ struct Solver {
     return result
   }
 
-  func longest( from: Path ) -> Path {
-    var queue: [Path] = [from]
-    var longest: Path = from
+  func longest( from: Path ) -> Path? {
+    if from.isSolved {
+      return from
+    }
 
-    while !queue.isEmpty {
-      let move = queue.removeFirst()
-      let validMoves = moves( from: move )
+    let validMoves = moves( from: from )
+    if validMoves.isEmpty {
+      return nil
+    }
 
-      for next in validMoves {
-        if next.isSolved { 
-          if longest.path.count < next.path.count {
-            longest = next
-          }
-        } else {
-          queue.append( next )
+    var result: Path? = nil
+    for move in validMoves {
+      if let candidate = longest( from: move ) {
+        if candidate.path.count > (result?.path.count ?? 0) {
+          result = candidate
         }
       }
     }
-
-    return longest
+    return result
   }
 
   func shortest( from: Path ) -> Path {
@@ -142,4 +141,4 @@ struct Solver {
 
 let solver = Solver(passcode: CommandLine.arguments[1])
 print( solver.shortest( from: Path(path: []) ) )
-print( solver.longest( from: Path(path: []) ).path.count )
+print( solver.longest( from: Path(path: []) )?.path.count ?? 0 )
