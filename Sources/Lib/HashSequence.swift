@@ -1,6 +1,10 @@
 import Foundation
 import CommonCrypto
 
+public protocol ByteRepresentable {
+  var byteRepresentation: [UInt8] { get }
+}
+
 internal struct Hex: Sequence, IteratorProtocol {
   var value: Int
 
@@ -20,25 +24,42 @@ internal struct Hex: Sequence, IteratorProtocol {
   }
 }
 
-public class HashSequence: Sequence, IteratorProtocol {
-  public typealias Element = (Int,[UInt8])
+
+extension Int: ByteRepresentable {
+  public var byteRepresentation: [UInt8] {
+    var result = [UInt8]()
+    if self > 0 {
+      result.append( contentsOf: Hex(self).reversed() )
+    } else if self == 0 {
+      result.append( 0x30 )
+    } else {
+      result.append( 0x2d )
+      result.append( contentsOf: (-self).byteRepresentation )
+    }
+
+    return result
+  }
+}
+
+extension String: ByteRepresentable {
+  public var byteRepresentation: [UInt8] {
+    return self.utf8.map { $0 as UInt8 }
+  }
+}
+
+public class MD5<T: ByteRepresentable> {
   let rounds: Int
   let bytes: [UInt8]
-  var val: Int = 0
   var digest: [UInt8] = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
 
   public init( bytes: String, rounds: Int ) {
-    self.bytes = bytes.utf8.map{ $0 as UInt8 }
+    self.bytes = bytes.byteRepresentation
     self.rounds = rounds
   }
 
-  public func hash( of value: Int ) -> [UInt8] {
+  public func hash( of value: T ) -> [UInt8] {
     var data = self.bytes
-    if value > 0 {
-      data.append( contentsOf: Hex(value).reversed() )
-    } else {
-      data.append( 0x30 )
-    }
+    data.append( contentsOf: value.byteRepresentation )
 
     _ = data.withUnsafeBufferPointer {
       CC_MD5( $0.baseAddress, CC_LONG( data.count ), &digest )
@@ -65,8 +86,13 @@ public class HashSequence: Sequence, IteratorProtocol {
 
     return digest
   }
+}
 
-  public func next() -> (Int, [UInt8])? {
+public class HashSequence: MD5<Int>, IteratorProtocol, Sequence {
+  public typealias Element = (Int,[UInt8])
+  var val: Int = 0
+
+  public func next() -> (Int,[UInt8])? {
     defer { val = val &+ 1 }
     return ( val, hash( of: val ) )
   }

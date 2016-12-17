@@ -17,6 +17,7 @@ let package = Package( name: "AdventOfCode2016",
                          Target( name: "Day13", dependencies: [ "Lib" ] ),
                          Target( name: "Day14", dependencies: [ "Lib" ] ),
                          Target( name: "Day15", dependencies: [ "Lib" ] ),
+                         Target( name: "Day17", dependencies: [ "Lib" ] ),
                        ],
                        dependencies: [
                          .Package( url: "https://github.com/peterkovacs/FootlessParser.git", majorVersion: 1 ),
