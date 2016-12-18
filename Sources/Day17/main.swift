@@ -103,12 +103,9 @@ struct Solver {
       return from
     }
 
-    let validMoves = moves( from: from )
-    if validMoves.isEmpty {
-      return nil
-    }
-
     var result: Path? = nil
+    let validMoves = moves( from: from )
+
     for move in validMoves {
       if let candidate = longest( from: move ) {
         if candidate.path.count > (result?.path.count ?? 0) {
