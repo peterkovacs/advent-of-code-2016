@@ -6,12 +6,6 @@ import Foundation
 // 3005290 = 2^(21) + 908138
 // The answer is then 2l + 1
 
-extension Int {
-  func divmod( _ by: Int ) -> (quotient: Int, remainder: Int) {
-    return ( self / by, self % by )
-  }
-}
-
 func pow( _ base: Int, _ exponent: Int ) -> Int {
   var result = 1
   for _ in 1...exponent {
@@ -33,14 +27,9 @@ print( "PART 1: \(part1!)" )
 // If we're in the first half, then the numbers simply go up normally.
 // If we're in the second half, we go up 2n + 1.
 
-let part2 = stride( from: 1, through: 63, by: 1 ).first() { input <= pow(3, $0 + 1) }.map { (a: Int) -> Int in
-  let power = pow( 3, a )
-
-  if input - power > power {
-    return 2*input - 3*power
-  } else {
-    return input - power
-  }
+let part2: Int? = stride( from: 1, through: 63, by: 1 ).first() { input <= pow(3, $0 + 1) }.map { 
+  let power = pow( 3, $0 )
+  return input - power + max( input - 2 * power, 0 )
 }
 
 print( "PART 2: \(part2!)" )
