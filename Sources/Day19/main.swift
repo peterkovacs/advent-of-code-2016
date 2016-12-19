@@ -12,38 +12,35 @@ extension Int {
   }
 }
 
-let input = Int( CommandLine.arguments[1] )!
-let result: Int? = stride( from: 63, through: 1, by: -1 ).first() { input / (1 << $0) == 1 }.map { (input % (1 << $0) ) * 2 + 1 }
-print( "PART 1: \(result!)" )
-
-extension String {
-  func withLeftPadding( padding: String = " ", size: Int ) -> String {
-    let chrs = size - characters.count
-    var result = String( repeating: padding, count: chrs )
-    result.append( self )
-    return result
+func pow( _ base: Int, _ exponent: Int ) -> Int {
+  var result = 1
+  for _ in 1...exponent {
+    result = result &* base
   }
+
+  return result
 }
 
+let input = Int( CommandLine.arguments[1] )!
+let part1: Int? = stride( from: 63, through: 1, by: -1 ).first() { input / (1 << $0) == 1 }.map { (input % (1 << $0) ) * 2 + 1 }
+print( "PART 1: \(part1!)" )
 
 // 
 // Part 2, each elf takes directly across.
+//
+// Similarly to Part 1, represent the input as 3^a + l
+//
+// If we're in the first half, then the numbers simply go up normally.
+// If we're in the second half, we go up 2n + 1.
 
-var elves: [Int] = Array( 1...3005290 )
-var i = 0
+let part2 = stride( from: 1, through: 63, by: 1 ).first() { input <= pow(3, $0 + 1) }.map { (a: Int) -> Int in
+  let power = pow( 3, a )
 
-// O(n^2), i need to figure out a better way to do this.
-while elves.count > 1 {
-  let index = ( i + elves.count/2 ) % elves.count
-
-  elves.removeSubrange( index...index )
-  if index > i {
-    i = ( i + 1 ) % elves.count
+  if input - power > power {
+    return 2*input - 3*power
   } else {
-    i = i % elves.count
+    return input - power
   }
 }
 
-if let i = elves.first {
-  print( "PART 2: \(String(n, radix: 2).withLeftPadding( size: 32 )) \(i)" )
-}
+print( "PART 2: \(part2!)" )
