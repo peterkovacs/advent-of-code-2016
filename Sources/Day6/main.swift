@@ -3,7 +3,7 @@ import Lib
 
 typealias Position = [Character: Int]
 
-let data = Input().reduce( Array<Position>(repeating: [:], count: 8 ) ) { (message: [Position], line : String) in
+let data = STDIN.reduce( Array<Position>(repeating: [:], count: 8 ) ) { (message: [Position], line : String) in
   return line.characters.enumerated().reduce( message ) { (message, i) in
     var message = message
     message[ i.0 ][ i.1 ] = ( message[ i.0 ][ i.1 ] ?? 0 ) + 1 

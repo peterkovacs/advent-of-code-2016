@@ -5,7 +5,7 @@ import Lib
 let number = { Int($0)! } <^> oneOrMore( digit )
 let range = tuple <^> number <*> (char("-") *> number)
 
-let list = Input().map { (line: String) -> (Int, Int) in try! parse( range, line ) }.sorted { $0.0 < $1.0 }
+let list = STDIN.map { (line: String) -> (Int, Int) in try! parse( range, line ) }.sorted { $0.0 < $1.0 }
 
 
 typealias State = ((Int,Int)?,Array<(Int,Int)>.Iterator)

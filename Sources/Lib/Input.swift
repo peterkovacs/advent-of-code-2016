@@ -1,9 +1,3 @@
 import Foundation
 
-public struct Input: Sequence, IteratorProtocol {
-  public init() { }
-
-  public mutating func next() -> String? {
-    return readLine( strippingNewline: true )
-  }
-}
+public let STDIN = sequence( state: (), next: { _ in readLine( strippingNewline: true ) } )

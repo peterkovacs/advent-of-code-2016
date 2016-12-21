@@ -98,7 +98,7 @@ class CPU {
 }
 
 let cpu = CPU()
-for line in Input() {
+for line in STDIN {
   try cpu.load( line )
 }
 cpu.execute()

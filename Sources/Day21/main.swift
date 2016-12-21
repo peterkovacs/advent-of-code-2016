@@ -137,7 +137,7 @@ let parser: Parser<Character,Transforms> = {
   return swapPosition <|> swapLetter <|> rotateLeft <|> rotateRight <|> rotateLetter <|> reverse <|> move
 }()
 
-let commands = Input().map { try! parse( parser, $0 )  }
+let commands = STDIN.map { try! parse( parser, $0 )  }
 
 let part1 = commands.reduce( Password( password: Array("abcdefgh".characters) ) ) { $1.forward( $0 ) }
 print( "PART 1 \(part1)" )

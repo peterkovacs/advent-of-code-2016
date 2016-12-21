@@ -12,7 +12,7 @@ func isTriangle( tuple: Triangle ) -> Bool {
   (tuple.0 + tuple.2) > tuple.1 
 }
 
-let tuples = Input().map { try! parse( parser, $0 ) }
+let tuples = STDIN.map { try! parse( parser, $0 ) }
 let possible = tuples.filter(isTriangle)
 
 print( possible.count )

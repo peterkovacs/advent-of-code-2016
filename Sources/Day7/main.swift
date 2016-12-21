@@ -113,7 +113,7 @@ extension IP {
   }
 }
 
-let parsed = Input().map { try? parse( IP().parser(), $0 ) } 
+let parsed = STDIN.map { try? parse( IP().parser(), $0 ) } 
 let tls = parsed.filter { $0?.isTLS ?? false }
 let ssl = parsed.filter { $0?.isSSL ?? false }
 

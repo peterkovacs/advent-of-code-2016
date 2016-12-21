@@ -36,7 +36,7 @@ func sieve( _ discs: [(width:Int, position:Int)] ) -> Int {
   return base
 }
 
-var discs = Input().map { try! parse( parser, $0 ) }
+var discs = STDIN.map { try! parse( parser, $0 ) }
 print( "PART 1: \(sieve( discs ))" )
 
 discs.append( (11, 0) )

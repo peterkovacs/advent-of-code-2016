@@ -15,7 +15,7 @@ let number = { Int($0)! } <^> oneOrMore( digit )
 let checksum = { String($0)! } <^> ( char("[") *> oneOrMore( alphanumeric ) ) <* char("]")
 let word = { String($0)! } <^> oneOrMore( alphanumeric )
 let parser = curry({ Data( words: $0, sectorId: $1, checksum: $2 ) }) <^> ( oneOrMore( word <* char("-") ) ) <*> number <*> checksum
-let data = Input().map { try! parse( parser, $0 ) }
+let data = STDIN.map { try! parse( parser, $0 ) }
 
 extension Data {
   // A room is real (not a decoy) if the checksum is the five most common

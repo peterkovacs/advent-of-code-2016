@@ -82,7 +82,7 @@ let rect = curry({ Command.rect( $0, $1 ) }) <^> ( string( "rect " ) *> number )
 let rotateRow = curry({ Command.rotateRow( $0, $1 ) }) <^> ( string( "rotate row y=" ) *> number ) <*> ( string(" by ") *> number )
 let rotateCol = curry({ Command.rotateCol( $0, $1 ) }) <^> ( string( "rotate column x=" ) *> number ) <*> ( string(" by ") *> number )
 let parser = rect <|> rotateRow <|> rotateCol
-let result = Input().map { try! parse( parser, $0 ) }
+let result = STDIN.map { try! parse( parser, $0 ) }
 
 var screen = Screen()
 for command in result {

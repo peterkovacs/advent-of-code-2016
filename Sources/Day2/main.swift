@@ -46,7 +46,7 @@ let parser = zeroOrMore( direction )
 if CommandLine.argc == 1 || CommandLine.arguments[1] == "1" {
   var previousKey = Key(number:5)
 
-  let result = Input().map { (line: String) -> Key in
+  let result = STDIN.map { (line: String) -> Key in
     previousKey = try! parse( parser, line ).reduce( previousKey ) { (key, direction) in
       return key.next(in: direction)
     }
@@ -98,7 +98,7 @@ struct ComplexKey {
 
 if CommandLine.arguments[1] == "2" {
   var previousKey = ComplexKey(number:5)
-  let result = Input().map { (line: String) -> ComplexKey in
+  let result = STDIN.map { (line: String) -> ComplexKey in
     previousKey = try! parse( parser, line ).reduce( previousKey ) { (key, direction) in
       return key.next(in: direction)
     }
