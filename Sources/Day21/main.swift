@@ -2,84 +2,51 @@ import Foundation
 import FootlessParser
 import Lib
 
-enum Command {
-  case swapPosition(Int,Int)
-  case swapLetter(Int,Int)
-  case rotateLeft(Int)
-  case rotateRight(Int)
-  case rotateLetter(Int)
-  case reverse(Int,Int)
-  case move(Int,Int)
-}
-
 struct Password: CustomStringConvertible {
-  var password: [Int]
+  var password: [Character]
   
-  func execute( _ command: Command ) -> Password {
-    switch( command ) {
-    case let .swapPosition(x, y):
-      return swapPosition( x, y )
-    case let .swapLetter(x, y):
-      return swapLetter( x, y )
-    case let .rotateLeft(x):
-      return rotateLeft(x)
-    case let .rotateRight(x):
-      return rotateRight(x)
-    case let .rotateLetter(x):
-      return rotateLetter(x)
-    case let .reverse(x, y):
-      return reverse( x, y )
-    case let .move(x, y):
-      return move(x, y)
-    }
-  }
-
-  func reverse( _ command: Command ) -> Password {
-    switch( command ) {
-    case let .swapPosition(x, y):
-      return swapPosition( y, x )
-    case let .swapLetter(x, y):
-      return swapLetter( y, x )
-    case let .rotateLeft(x):
-      return rotateRight(x)
-    case let .rotateRight(x):
-      return rotateLeft(x)
-    case let .rotateLetter(x):
-      return rotateLetter( reverse: x )
-    case let .reverse( x, y ):
-      return reverse( x, y )
-    case let .move( x, y ):
-      return move( y, x )
-    }
-  }
-
   func swapPosition( _ a: Int, _ b: Int ) -> Password {
     var result = self
     swap(&result.password[a], &result.password[b])
     return result
   }
 
-  func swapLetter( _ a: Int, _ b: Int ) -> Password {
-    return Password( password: password.reduce([]) { $0 + [ $1 == a ? b : $1 == b ? a : $1 ] } )
+  func swapLetter( _ a: Character, _ b: Character ) -> Password {
+    return Password( password: password.map { switch $0 {
+        case a: return b
+        case b: return a
+        default: return $0
+      }
+    } )
   }
 
   func rotateLeft( _ num: Int ) -> Password { 
-    var result = [Int](repeating: 0, count: password.count)
-    for i in 0..<password.count {
-      result[i] = password[ (i + num) % password.count ]
+    let rotate = num % password.count
+
+    if rotate > 0 {
+      var result = [Character]()
+      result.append( contentsOf: password.dropFirst( rotate ) )
+      result.append( contentsOf: password.prefix( rotate ) )
+      return Password( password: result )
+    } else { 
+      return self
     }
-    return Password( password: result )
   }
 
   func rotateRight( _ num: Int ) -> Password { 
-    var result = [Int](repeating: 0, count: password.count)
-    for i in 0..<password.count {
-      result[i] = password[ (2*password.count + (i - num)) % password.count ]
+    let rotate = num % password.count
+
+    if rotate > 0 {
+      var result = [Character]()
+      result.append( contentsOf: password.dropFirst( password.count - rotate ) )
+      result.append( contentsOf: password.prefix( password.count - rotate ) )
+      return Password( password: result )
+    } else { 
+      return self
     }
-    return Password( password: result )
   }
 
-  func rotateLetter( _ letter: Int ) -> Password {
+  func rotateLetter( _ letter: Character ) -> Password {
     guard let index = password.index( of: letter ) else { fatalError( "\(letter) not found" ) }
 
     if index > 3 {
@@ -89,45 +56,27 @@ struct Password: CustomStringConvertible {
     }
   }
 
-  func rotateLetter( reverse letter: Int ) -> Password {
+  func rotateLetter( reverse letter: Character ) -> Password {
     guard let index = password.index( of: letter ) else { fatalError( "\(letter) not found" ) }
 
-    // We know where the letter ended up, so we just need to make a mapping of
-    // position to a rotate.
-    switch index {
-    case 0:
-      return rotateLeft(1)
-    case 1:
-      return rotateLeft(1)
-    case 2:
-      return rotateRight(2)
-    case 3:
-      return rotateLeft(2)
-    case 4: 
-      return rotateRight(1)
-    case 5:
-      return rotateLeft(3)
-    case 6:
-      return self
-    case 7:
-      return rotateLeft(4)
-    default:
-      fatalError( "Invalid Index \(index)" )
+    if index == 0 {
+      return rotateLeft( 1 )
+    } else if index % 2 == 0 {
+      return rotateLeft( ( (index + password.count) / 2 + 1 ) % password.count )
+    } else {
+      return rotateLeft( index / 2 + 1 )
     }
   }
 
   func reverse( _ start: Int, _ end: Int ) -> Password {
-    var result = [Int]()
+    precondition( start >= password.startIndex )
+    precondition( end < password.endIndex )
 
-    if start > 0 {
-      result.append( contentsOf: password.prefix( start ) )
-    }
+    var result = [Character]()
 
+    result.append( contentsOf: password.prefix( start ) )
     result.append( contentsOf: password[ start...end ].reversed() )
-
-    if end < password.endIndex {
-      result.append( contentsOf: password.dropFirst( end + 1 ) )
-    }
+    result.append( contentsOf: password.dropFirst( end + 1 ) )
 
     return Password( password: result )
   }
@@ -140,29 +89,58 @@ struct Password: CustomStringConvertible {
   }
 
   var description: String {
-    let scalars = password.map { String(Character(UnicodeScalar( $0 + (0x60 as Int) )!) ) }
-
-    return scalars.joined()
+    return password.reduce( "" ) { $0 + String($1) }
   }
 }
 
-let parser: Parser<Character,Command> = {
+typealias Transform = (Password) -> Password
+typealias Transforms = (forward: Transform, reverse: Transform)
+let parser: Parser<Character,Transforms> = {
   let index = { Int($0)! } <^> oneOrMore( digit )
-  let letter = { Int(UnicodeScalar( "\($0)".unicodeScalars.first! ).value - 0x60) } <^> oneOf( "abcdefgh".characters )
-  let swapPosition = curry({ Command.swapPosition( $0, $1 ) }) <^> (string( "swap position ") *> index ) <*> (string( " with position ") *> index)
-  let swapLetter = curry({ Command.swapLetter( $0, $1 ) }) <^> (string( "swap letter ") *> letter ) <*> (string( " with letter ") *> letter)
-  let rotateLeft = { Command.rotateLeft( $0 ) } <^> (string( "rotate left " ) *> index ) <* string( " step" ) <* optional(char("s"))
-  let rotateRight = { Command.rotateRight( $0 ) } <^> (string( "rotate right " ) *> index ) <* string( " step" ) <* optional(char("s"))
-  let rotateLetter = { Command.rotateLetter( $0 ) } <^> (string( "rotate based on position of letter " ) *> letter )
-  let reverse = curry({ Command.reverse( min($0,$1), max($0,$1) ) }) <^> (string( "reverse positions " ) *> index ) <*> ( string( " through " ) *> index )
-  let move = curry({ Command.move( $0, $1 ) }) <^> (string( "move position " ) *> index ) <*> ( string( " to position " ) *> index )
+  let letter = oneOf( "abcdefgh".characters )
+
+  let swapPosition = curry({ (a:Int, b:Int) -> Transforms in
+    let c: Transform = { Password.swapPosition( $0 )( a, b ) }
+    return ( forward: c, reverse: c )
+  }) <^> (string( "swap position ") *> index ) <*> (string( " with position ") *> index)
+
+  let swapLetter = curry({ (a:Character, b:Character) -> Transforms in 
+    let c: Transform = { Password.swapLetter( $0 )( a, b ) }
+    return ( forward: c, reverse: c )
+  }) <^> (string( "swap letter ") *> letter ) <*> (string( " with letter ") *> letter)
+
+  let rotateLeft = { (a:Int) -> Transforms in 
+    return ( forward: { Password.rotateLeft( $0 )( a ) }, 
+             reverse: { Password.rotateRight( $0 )( a ) } )
+  } <^> (string( "rotate left " ) *> index ) <* string( " step" ) <* optional(char("s"))
+
+  let rotateRight = { (a:Int) -> Transforms in 
+    return ( forward: { Password.rotateRight( $0 )( a ) }, 
+             reverse: { Password.rotateLeft( $0 )( a ) } )
+  } <^> (string( "rotate right " ) *> index ) <* string( " step" ) <* optional(char("s"))
+
+  let rotateLetter = { (a:Character) -> Transforms in 
+    return ( forward: { Password.rotateLetter(_:)( $0 )( a ) }, 
+             reverse: { Password.rotateLetter(reverse:)( $0 )( a ) } )
+  } <^> (string( "rotate based on position of letter " ) *> letter )
+
+  let reverse = curry({ (a:Int, b:Int) -> Transforms in 
+    let c: Transform = { Password.reverse( $0 )( min(a,b), max(a,b) ) }
+    return ( forward: c, reverse: c )
+  }) <^> (string( "reverse positions " ) *> index ) <*> ( string( " through " ) *> index )
+
+  let move = curry({ (a:Int, b:Int) -> Transforms in 
+    return ( forward: { Password.move( $0 )( a, b ) },
+             reverse: { Password.move( $0 )( b, a ) } )
+  }) <^> (string( "move position " ) *> index ) <*> ( string( " to position " ) *> index )
+
   return swapPosition <|> swapLetter <|> rotateLeft <|> rotateRight <|> rotateLetter <|> reverse <|> move
 }()
 
 let commands = Input().map { try! parse( parser, $0 )  }
 
-let part1 = commands.reduce( Password( password: [ 1, 2, 3, 4, 5, 6, 7, 8 ] ) ) { $0.execute( $1 ) }
+let part1 = commands.reduce( Password( password: Array("abcdefgh".characters) ) ) { $1.forward( $0 ) }
 print( "PART 1 \(part1)" )
 
-let part2 = commands.reversed().reduce( Password( password: [ 6, 2, 7, 4, 3, 5, 1, 8 ] ) ) { $0.reverse( $1 ) }
+let part2 = commands.reversed().reduce( Password( password: Array( "fbgdceah".characters ) ) ) { $1.reverse( $0 ) }
 print( "PART 2 \(part2)" )
