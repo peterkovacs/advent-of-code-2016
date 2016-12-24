@@ -7,6 +7,16 @@ typealias Register = Int
 enum Value {
   case register(Register)
   case int(Int)
+
+  static func ==(lhs: Value, rhs: Value) -> Bool {
+    if case .register( let l ) = lhs, case .register( let r ) = rhs {
+      return l == r
+    } else if case .int( let l ) = lhs, case .int( let r ) = rhs {
+      return l == r
+    } else {
+      return false
+    }
+  }
 }
 
 enum Instruction {
@@ -44,9 +54,33 @@ class CPU {
     code.append( try parse( parser, line ) )
   }
 
+  func optimize() -> Bool {
+    if pc + 4 < code.endIndex {
+      if case .inc(let a) = code[ pc ], case .register(let registera) = a,
+         case .dec(let b) = code[ pc + 1], !(a == b), case .register(let registerb) = b,
+         case .jnz(let jnz, let `where`) = code[ pc + 2 ], jnz == b,
+           case .int(let val) = `where`, -2 == val,
+         case .dec(let c) = code[ pc + 3 ], !(b == c), !(a == c), case .register(let registerc) = c,
+         case .jnz(let jnz2, let where2) = code[pc + 4], jnz2 == c,
+         case .int(let val2) = where2, -5 == val2 {
+           registers[registera] = registers[registera] + registers[registerb] * registers[registerc]
+           registers[registerb] = 0
+           registers[registerc] = 0
+           pc = pc.advanced(by: 5)
+           return true
+         }
+    }
+    return false
+  }
+
   func execute() {
     while pc != code.endIndex {
       let instruction = code[ pc ]
+
+      if optimize() {
+        continue
+      }
+
       switch instruction {
       case .cpy(let from, let to):
         cpy( from: from, to: to )
@@ -142,13 +176,6 @@ for line in STDIN {
   try cpu.load( line )
 }
 
-if CommandLine.arguments[1] == "1" {
-  cpu.reset( a: 7, b: 0, c: 0, d: 0 )
-  cpu.execute()
-  print( cpu.registers )
-} else {
-  cpu.reset( a: 12, b: 0, c: 0, d: 0 )
-  cpu.execute()
-  print( cpu.registers )
-}
-
+cpu.reset( a: Int(CommandLine.arguments[1])!, b: 0, c: 0, d: 0 )
+cpu.execute()
+print( cpu.registers )
