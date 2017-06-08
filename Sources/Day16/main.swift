@@ -63,18 +63,12 @@ struct Dragon {
   func checksum( size: Int ) -> [UInt8] {
     // Calculate largest power of 2 that divides data.count.
     let chunksize = size & ~(size - 1)
-
-    let queue = DispatchQueue( label: "com.kovapps.dragon", attributes: .concurrent )
-    let group = DispatchGroup()
     var result = [UInt8](repeating: 0, count: size / chunksize)
 
-    for i in stride( from: 0, to: size, by: chunksize ) {
-      queue.async( group: group ) {
-        result[ i / chunksize ] = (i..<(i+chunksize)).reduce(0, { $0 ^ self[$1] }) ^ 1
-      }
+    DispatchQueue.concurrentPerform(iterations: result.count) { i in
+      let range = (i*chunksize)..<((i+1)*chunksize)
+      result[ i ] = range.reduce( 0, { $0 ^ self[$1] }) ^ 1
     }
-
-    group.wait()
 
     return result
   }
